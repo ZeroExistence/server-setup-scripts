@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  tasks:
+    - name: update all packages
+      apt:
+        upgrade: dist
+    - name: install all basic packages
+      apt:
+        name: ufw,nginx,tor,cryptsetup,xfsprogs,deluged,deluge-web,deluge-console
+        state: latest
+    - name: ensure nginx is running (and enable it at boot)
+      service: name=nginx state=started enabled=yes
+    - service: name=tor state=started enabled=yes
+    - name: sshd config
+      lineinfile:
+        name: /etc/ssh/sshd_config
+        regexp: '^AllowTcpForwarding'
+        insertafter: '#AllowTcpForwarding'
+        line: 'AllowTcpForwarding yes'
+    - name: restart sshd
+      service: name=sshd state=restarted
+    - name: reconfigure tor
+      blockinfile:
+        name: /etc/tor/torrc
+        block: |
+          SocksTimeout 300
+          CircuitStreamTimeout 300
+          CircuitIdleTimeout 600
+    - name: restart tor
+      service: name=tor state=restarted
+    - name: ufw firewall rule
+      ufw:
+        rule: allow
+        port: ssh
+        proto: tcp
+    - ufw:
+        policy: allow
+        direction: outgoing
+    - ufw:
+        policy: deny
+        direction: incoming
+    - ufw:
+        state: enabled
+    - user:
+        name: user
+    - name: run deluge
+      shell: |
+        deluged
+        deluge-web -f
+      become: true
+      become_user: user
+
