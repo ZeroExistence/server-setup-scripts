@@ -1,5 +1,8 @@
 ---
 - hosts: localhost
+  vars:
+    var1: 'wwwwwwwowwwww'
+    var2: 'aaaaaaaaaaaaa'
   tasks:
     - name: update all packages
       apt:
@@ -43,8 +46,25 @@
     - pip:
         name: flask,uwsgi
         virtualenv: /var/myapps/flasksite
-	## Install postgre for Django
-	- name: install postgresql
-	  apt:
-	    name: postgresql
-		state: latest
+        ## Install postgre for Django
+    - name: install postgresql
+      apt:
+        name: postgresql
+        state: latest
+    - name: template test
+      template:
+        src: template.j2
+        dest: /var/tmp/temp.txt
+    - name: remove enabled sites
+      file:
+        state: absent
+        path: /etc/nginx/sites-enabled/default
+    - name: copy template
+      template:
+        src: djangonginx.conf
+        dest: /etc/nginx/sites-available
+    - name: enable site
+      file:
+        src: /etc/nginx/sites-available/djangonginx.conf
+        dest: /etc/nginx/sites-enabled/djangonginx.conf
+        state: link
