@@ -1,8 +1,5 @@
 ---
 - hosts: localhost
-  vars:
-    var1: 'wwwwwwwowwwww'
-    var2: 'aaaaaaaaaaaaa'
   tasks:
     - name: update all packages
       apt:
@@ -34,7 +31,7 @@
         policy: allow
         direction: outgoing
     - ufw:
-        policy: allow
+        policy: deny
         direction: incoming
     - ufw:
         state: enabled
@@ -43,18 +40,10 @@
     - pip:
         name: django,uwsgi
         virtualenv: /var/myapps/djangosite
-    - pip:
-        name: flask,uwsgi
-        virtualenv: /var/myapps/flasksite
-        ## Install postgre for Django
     - name: install postgresql
       apt:
         name: postgresql
         state: latest
-    - name: template test
-      template:
-        src: template.j2
-        dest: /var/tmp/temp.txt
     - name: remove enabled sites
       file:
         state: absent
@@ -63,8 +52,18 @@
       template:
         src: djangonginx.conf
         dest: /etc/nginx/sites-available
+    - name: copy django uwsgi config
+      template:
+        src: djangosite.ini
+        dest: /etc/uwsgi/sites
     - name: enable site
       file:
         src: /etc/nginx/sites-available/djangonginx.conf
         dest: /etc/nginx/sites-enabled/djangonginx.conf
         state: link
+    - name: change ownership
+      file:
+        path: /var/myapps
+        owner: www-data
+        group: www-data
+        mode: 0640
