@@ -28,6 +28,10 @@
         port: http
         proto: tcp
     - ufw:
+        rule: allow
+        port: https
+        proto: tcp
+    - ufw:
         policy: allow
         direction: outgoing
     - ufw:
@@ -38,7 +42,7 @@
     - pip:
         name: uwsgi,virtualenv,virtualenvwrapper
     - pip:
-        name: django,uwsgi
+        name: django,uwsgi, pillow, psycopg2, psycopg2-binary
         virtualenv: /var/myapps/djangosite
     - name: install postgresql
       apt:
