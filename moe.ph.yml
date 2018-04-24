@@ -84,6 +84,10 @@
       template:
         src: uwsgi.service
         dest: /etc/systemd/system/uwsgi.service
+    - name: enable uwsgi service
+      service: name=uwsgi enabled=yes    
+    - name: start uwsgi service
+      service: name=nginx state=started
     - name: change ownership
       file:
         path: /var/myapps
