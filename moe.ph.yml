@@ -1,0 +1,92 @@
+---
+- hosts: localhost
+  tasks:
+    - name: update all packages
+      apt:
+        upgrade: dist
+    - name: install all basic packages
+      apt:
+        name: ufw,nginx,cryptsetup,xfsprogs
+        state: latest
+    - name: ensure nginx is running (and enable it at boot)
+      service: name=nginx state=started enabled=yes
+    - name: download certbot-auto
+      get_url:
+        url: https://dl.eff.org/certbot-auto
+        dest: /root/certbot-auto
+        mode: 0700
+    - name: install certbot-auto
+      command: /root/certbot-auto --install-only -n
+    - name: sshd config
+      lineinfile:
+        name: /etc/ssh/sshd_config
+        regexp: '^AllowTcpForwarding'
+        insertafter: '#AllowTcpForwarding'
+        line: 'AllowTcpForwarding yes'
+    - name: restart sshd
+      service: name=sshd state=restarted
+    - name: ufw firewall rule
+      ufw:
+        rule: allow
+        port: ssh
+        proto: tcp
+    - ufw:
+        rule: allow
+        port: http
+        proto: tcp
+    - ufw:
+        rule: allow
+        port: https
+        proto: tcp
+    - ufw:
+        policy: allow
+        direction: outgoing
+    - ufw:
+        policy: deny
+        direction: incoming
+    - ufw:
+        state: enabled
+    - pip:
+        name: uwsgi,virtualenv,virtualenvwrapper
+    - pip:
+        name: django,uwsgi, pillow, psycopg2, psycopg2-binary
+        virtualenv: /var/myapps/djangosite
+    - name: install postgresql
+      apt:
+        name: postgresql
+        state: latest
+    - name: remove enabled sites
+      file:
+        state: absent
+        path: /etc/nginx/sites-enabled/default
+    - name: copy template
+      template:
+        src: moe.ph.conf
+        dest: /etc/nginx/sites-available
+    - name: create uwsgi folder
+      file:
+        path: /etc/uwsgi/sites
+        state: directory
+    - name: copy django uwsgi config
+      template:
+        src: moe.ph.ini
+        dest: /etc/uwsgi/sites
+    - name: enable site
+      file:
+        src: /etc/nginx/sites-available/moe.ph.conf
+        dest: /etc/nginx/sites-enabled/moe.ph.conf
+        state: link
+    - name: download repository
+      command: git clone -b dev https://github.com/ZeroExistence/moeph.git
+      args:
+        chdir: /var/myapps/djangosite/
+    - name: copy uwsgi service file
+      template:
+        src: uwsgi.service
+        dest: /etc/systemd/system/uwsgi.service
+    - name: change ownership
+      file:
+        path: /var/myapps
+        owner: www-data
+        group: www-data
+        mode: 0640

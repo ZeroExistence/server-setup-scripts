@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  vars:
+    secret_key: 'seccererer'
+    allowed_host: 'moe.ph'
+    database_name: 'moeph'
+    database_user: 'moephuser'
+    database_pass: 'Chang3m3'
+  tasks:
+    - name: copy django uwsgi config
+      template:
+        src: settings.py
+        dest: /root/settings.py
