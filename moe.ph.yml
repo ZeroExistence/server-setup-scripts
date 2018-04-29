@@ -8,8 +8,6 @@
       apt:
         name: ufw,nginx,cryptsetup,xfsprogs
         state: latest
-    - name: ensure nginx is running (and enable it at boot)
-      service: name=nginx state=started enabled=yes
     - name: download certbot-auto
       get_url:
         url: https://dl.eff.org/certbot-auto
@@ -59,9 +57,13 @@
       file:
         state: absent
         path: /etc/nginx/sites-enabled/default
-    - name: copy template
+    - name: copy nginx config for moe.ph
       template:
         src: moe.ph.conf
+        dest: /etc/nginx/sites-available
+    - name: copy nginx config for cdn.moe.ph
+      template:
+        src: cdn.moe.ph.conf
         dest: /etc/nginx/sites-available
     - name: create uwsgi folder
       file:
@@ -71,10 +73,15 @@
       template:
         src: moe.ph.ini
         dest: /etc/uwsgi/sites
-    - name: enable site
+    - name: enable moe.ph site
       file:
         src: /etc/nginx/sites-available/moe.ph.conf
         dest: /etc/nginx/sites-enabled/moe.ph.conf
+        state: link
+    - name: enable cdn.moe.ph site
+      file:
+        src: /etc/nginx/sites-available/cdn.moe.ph.conf
+        dest: /etc/nginx/sites-enabled/cdn.moe.ph.conf
         state: link
     - name: download repository
       command: git clone -b dev https://github.com/ZeroExistence/moeph.git
@@ -84,13 +91,13 @@
       template:
         src: uwsgi.service
         dest: /etc/systemd/system/uwsgi.service
-    - name: enable uwsgi service
-      service: name=uwsgi enabled=yes    
-    - name: start uwsgi service
-      service: name=nginx state=started
     - name: change ownership
       file:
         path: /var/myapps
         owner: www-data
         group: www-data
-        mode: 0640
+        mode: 0700
+    - name: enable uwsgi service
+      service: name=uwsgi enabled=yes
+    - name: ensure nginx is running (and enable it at boot)
+      service: name=nginx state=started enabled=yes
