@@ -2,4 +2,14 @@ createdb moeph
 createuser moeph
 psql
 alter user moeph with encrypted password 'Chang3m3';
-grant all privileges on database moeph to moeph;
+grant all privileges on database moeph to moephuser;
+
+pg_dump --no-owner -d moeph > fullbak.sql
+
+pg_dump --no-owner -d moeph -t book_author -t book_book -t book_book_tag -t book_genre -t book_tag -t book_volume > book.sql
+
+psql -c 'create database moeph; create user moeph; alter user moephuser with encrypted password 'Chang3m3'; grant all privileges on database moeph to moephuser;'
+
+psql -d moeph -1 -c 'delete from book_book_tag; delete from book_volume; delete from book_book; delete from book_author; delete from book_genre; delete from book_tag;'
+
+psql -d database -1 -f book.sql
