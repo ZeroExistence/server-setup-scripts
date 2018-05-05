@@ -1,0 +1,5 @@
+createdb moeph
+createuser moeph
+psql
+alter user moeph with encrypted password 'Chang3m3';
+grant all privileges on database moeph to moeph;
