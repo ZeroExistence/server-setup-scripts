@@ -13,3 +13,9 @@ psql -c 'create database moeph; create user moeph; alter user moephuser with enc
 psql -d moeph -1 -c 'delete from book_book_tag; delete from book_volume; delete from book_book; delete from book_author; delete from book_genre; delete from book_tag;'
 
 psql -d database -1 -f book.sql
+
+select 'alter table ' || table_name || ' owner to moephdev;' from information_schema.tables where table_schema = 'public';
+
+git stash
+git checkout remotes/origin/dev
+git checkout master

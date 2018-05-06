@@ -59,7 +59,7 @@
         path: /etc/nginx/sites-enabled/default
     - name: copy nginx config for moe.ph
       template:
-        src: moe.ph.conf
+        src: 80-moe.ph.conf
         dest: /etc/nginx/sites-available
     - name: copy nginx config for cdn.moe.ph
       template:
@@ -75,8 +75,8 @@
         dest: /etc/uwsgi/sites
     - name: enable moe.ph site
       file:
-        src: /etc/nginx/sites-available/moe.ph.conf
-        dest: /etc/nginx/sites-enabled/moe.ph.conf
+        src: /etc/nginx/sites-available/80-moe.ph.conf
+        dest: /etc/nginx/sites-enabled/80-moe.ph.conf
         state: link
     - name: enable cdn.moe.ph site
       file:
@@ -84,7 +84,7 @@
         dest: /etc/nginx/sites-enabled/cdn.moe.ph.conf
         state: link
     - name: download repository
-      command: git clone -b dev https://github.com/ZeroExistence/moeph.git
+      command: git clone https://github.com/ZeroExistence/moeph.git
       args:
         chdir: /var/myapps/djangosite/
     - name: copy uwsgi service file
