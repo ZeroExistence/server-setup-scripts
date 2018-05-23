@@ -6,11 +6,8 @@
         upgrade: dist
     - name: install all basic packages
       apt:
-        name: ufw,nginx,tor,cryptsetup,xfsprogs,deluged,deluge-web,deluge-console
+        name: ufw,tor,cryptsetup,xfsprogs,deluged,deluge-web,deluge-console,mate-desktop-environment-core,tightvncserver,firefox-esr
         state: latest
-    - name: ensure nginx is running (and enable it at boot)
-      service: name=nginx state=started enabled=yes
-    - service: name=tor state=started enabled=yes
     - name: sshd config
       lineinfile:
         name: /etc/ssh/sshd_config
@@ -27,7 +24,7 @@
           CircuitStreamTimeout 300
           CircuitIdleTimeout 600
     - name: restart tor
-      service: name=tor state=restarted
+      service: name=tor state=restarted enabled=yes
     - name: ufw firewall rule
       ufw:
         rule: allow
@@ -47,6 +44,7 @@
       shell: |
         deluged
         deluge-web -f
+        vncserver :5
       become: true
       become_user: user
 
