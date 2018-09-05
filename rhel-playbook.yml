@@ -1,0 +1,86 @@
+---
+- hosts: localhost
+    ansible_python_interpreter=/usr/bin/python2.7
+  tasks:
+    - name: update all packages
+      yum:
+        name: '*'
+        state: latest
+    - name: install all basic packages
+      yum:
+        name: "{{ packages }}"
+        state: latest
+      vars:
+        packages:
+        - httpd
+        - krb5-server
+        - krb5-workstation
+        - unbound
+        - nfs-utils
+        - samba
+        - samba-client
+        - cifs-utils
+        - fail2ban
+    - name: configure fail2ban service
+      service: name=fail2ban state=started enabled=yes
+    - name: config /etc/krb5.conf
+      template:
+        src: krb5.conf.j2
+        dest: /etc/krb5.conf.j2
+    # Create kerberos database by using this command: kdb5_util create -s
+    - name: set service startup
+      service: name=kadmin state=started enabled=yes
+    - service: name=krb5kdc state=started enabled=yes
+    # Create user in kadmin.local using add_princ [USER]
+    - name: set forward-zone
+      blockinfile:
+        name: /etc/unbound/unbound.conf
+        block: |
+          server:
+            access-control: 192.168.0.0/24 allow
+          forward-zone:
+            name: "."
+            forward-addr: 8.8.8.8
+    - name: set unbound service startup
+      service: name=unbound state=started enabled=yes
+    - name: create user for nfs test
+      user:
+        name: nfs-user1
+    - file:
+        path: /nfs/nfs-user1
+        owner: nfs-user1
+        state: directory
+    - group:
+        name: nfs-group1
+    - file:
+        path: /nfs/nfs-group1
+        group: nfs-group1
+        state: directory
+    - name: nfs exports config
+      lineinfile:
+        name: /etc/exports
+        regexp: '^/nfs/root'
+        line: '/nfs/root  127.0.0.0/16(rw,async)'
+    - name: set service startup nfs
+      service: name=nfs state=started enabled=yes
+    - name: create user for samba test
+      user:
+        name: samba-user1
+    - group:
+        name: samba-group1
+        state: present
+    - name: set service startup samba
+      service: name=smb state=started enabled=yes
+    # Set hosts allow in [global] config in /etc/samba/smb.conf
+    # Set password to user smbpasswd -a [USER]
+    # Testparm to test the smb.conf
+    - name: set firewalld
+      firewalld:
+        zone: public
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - https
+        - http
