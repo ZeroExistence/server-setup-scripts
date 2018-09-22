@@ -13,7 +13,7 @@
         state: latest
     - name: install all pip3 dependecies
       pip:
-        name: apt
+        name:
     - name: set new repository
       apt_repository:
         repo: deb http://deb.debian.org/debian/ unstable main
@@ -21,16 +21,17 @@
     - name: set unstable priority
       blockinfile:
         name: /etc/apt/preferences.d/limit-unstable
+        create: yes
         block: |
           Package: *
           Pin: release a=unstable
           Pin-Priority: 150
     - include_tasks: setup-ss.yml
       with_items:
-        - { shadow_port: 443, shadow_pass: "Chai@China092018", shadow_method: "aes-256-cfb" }
-        - { shadow_port: 8443, shadow_pass: "Chai@China092018-8443", shadow_method: "chacha20-ietf-poly1305" }
+        - { shadow_port: 443, shadow_pass: "password@443", shadow_method: "aes-256-cfb" }
+        - { shadow_port: 8443, shadow_pass: "password@8443", shadow_method: "chacha20-ietf-poly1305" }
     - name: set firewalld default rule
-      command: firewall-cmd --permanent --zone=default --set-target=DROP
+      command: firewall-cmd --permanent --zone=public --set-target=DROP
     - name: restart firewalld
       command: firewall-cmd --reload
 

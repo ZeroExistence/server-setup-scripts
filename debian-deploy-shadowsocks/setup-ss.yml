@@ -6,7 +6,7 @@
   - name: configure service
     template:
       src: shadowsocks-libev.service.j2
-      dest: /etc/systemctl/system/shadowsocks-libev@{{ item.shadow_port }}.service
+      dest: /etc/systemd/system/shadowsocks-libev@{{ item.shadow_port }}.service
   - name: set firewalld ports
     firewalld:
       zone: public
