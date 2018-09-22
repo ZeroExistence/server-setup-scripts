@@ -1,0 +1,24 @@
+---
+  - name: create config file
+    template:
+      src: config.json.j2
+      dest: /etc/shadowsocks-libev/config-{{ item.shadow_port }}.json
+  - name: configure service
+    template:
+      src: shadowsocks-libev.service.j2
+      dest: /etc/systemctl/system/shadowsocks-libev@{{ item.shadow_port }}.service
+  - name: set firewalld ports
+    firewalld:
+      zone: public
+      port: "{{ item.shadow_port }}/tcp"
+      permanent: true
+      state: enabled
+      immediate: yes
+  - name: reload daemon
+    systemd:
+      daemon_reload: yes 
+  - name: restart systemctl
+    systemd:
+      name: shadowsocks-libev@{{ item.shadow_port }}
+      state: started 
+      enabled: yes

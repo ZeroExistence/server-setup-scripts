@@ -6,6 +6,11 @@
       yum:
         name: '*'
         state: latest
+    - name: enable selinux
+      lineinfile:
+        name: /etc/selinux/config
+        regexp: '^SELINUX='
+        line: 'SELINUX=enforcing'      
     - name: install all basic packages
       yum:
         name: "{{ packages }}"
@@ -21,6 +26,7 @@
         - samba-client
         - cifs-utils
         - fail2ban
+        - mariadb-server
     - name: configure fail2ban service
       service: name=fail2ban state=started enabled=yes
     - name: config /etc/krb5.conf
@@ -84,3 +90,26 @@
       loop:
         - https
         - http
+    - name: set firewalld ports
+      firewalld:
+        zone: public
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - 54321/tcp
+        - 54321/udp
+    - name: set firewalld direct rules
+      command: firewall-cmd --direct --permanent --add-rule "{{ item.ipv }}" "{{ item.filter }}" "{{ item.table }}" "{{ item.priority }}" "{{ item.rule }}"
+      loop:
+        #- { ipv: 'ipv4', filter: 'filter', table: 'OUTPUT', priority: , rule: ''}
+        - { ipv: 'ipv4', filter: 'filter', table: 'OUTPUT', priority: 1, rule: '-p udp --dport 67 -j ACCEPT'}
+        - { ipv: 'ipv6', filter: 'filter', table: 'OUTPUT', priority: 1, rule: '-p tcp --dport 667 -j ACCEPT'}
+        - { ipv: 'ipv4', filter: 'filter', table: 'OUTPUT', priority: 2, rule: '-p udp --dport 67 -j ACCEPT'}
+        - { ipv: 'ipv6', filter: 'filter', table: 'OUTPUT', priority: 2, rule: '-p tcp --dport 667 -j ACCEPT'}
+        ### Placeholder for dropping all outgoing traffic.
+        #- { ipv: 'ipv4', filter: 'filter', table: 'OUTPUT', priority: 20, rule: '-j DROP'}
+        #- { ipv: 'ipv6', filter: 'filter', table: 'OUTPUT', priority: 20, rule: '-j DROP'}
+    - name: restart firewalld
+      command: firewall-cmd --reload

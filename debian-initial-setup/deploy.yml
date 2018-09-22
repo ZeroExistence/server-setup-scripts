@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  vars: 
+    shadow_pass: ''
+  tasks:
+    - name: update all packages
+      apt:
+        upgrade: dist
+    - name: install all basic packages
+      apt:
+        name: python3-apt,fail2ban,firewalld,git
+        state: latest
+    - name: install all pip3 dependecies
+      pip:
+        name:
+    - name: set new repository
+      apt_repository:
+        repo: deb http://deb.debian.org/debian/ unstable main
+        state: present
+    - name: set unstable priority
+      blockinfile:
+        name: /etc/apt/preferences.d/limit-unstable
+        create: yes
+        block: |
+          Package: *
+          Pin: release a=unstable
+          Pin-Priority: 150
+    - name: install required packages
+      apt:
+        name: wireguard,linux-headers-amd64,nfs-common
+        state: latest
+    - name: set firewalld
+      firewalld:
+        zone: public
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - ssh
+        - dhcpv6-client
+    - name: set firewalld ports
+      firewalld:
+        zone: public
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: yes
+      loop:
+        - 54321/tcp
+        - 54321/udp
+    - name: set firewalld default rule
+      command: firewall-cmd --permanent --zone=public --set-target=DROP
+    - name: restart firewalld
+      command: firewall-cmd --reload
+    - name: mount nfs
+      mount:
+        path: /root/nfs
+        src: 192.168.100.1:/root/nfs
+        fstype: nfs4
+        state: mounted

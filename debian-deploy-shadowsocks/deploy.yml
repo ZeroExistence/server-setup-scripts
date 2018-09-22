@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  vars: 
+    shadow_pass_443: 'Chai@China092018'
+    shadow_pass_8443: 'Chai@China092018-8443'
+  tasks:
+    - name: update all packages
+      apt:
+        upgrade: dist
+    - name: install all basic packages
+      apt:
+        name: shadowsocks-libev,firewalld,python3-apt,fail2ban
+        state: latest
+    - name: install all pip3 dependecies
+      pip:
+        name: apt
+    - name: set new repository
+      apt_repository:
+        repo: deb http://deb.debian.org/debian/ unstable main
+        state: present
+    - name: set unstable priority
+      blockinfile:
+        name: /etc/apt/preferences.d/limit-unstable
+        block: |
+          Package: *
+          Pin: release a=unstable
+          Pin-Priority: 150
+    - include_tasks: setup-ss.yml
+      with_items:
+        - { shadow_port: 443, shadow_pass: "Chai@China092018", shadow_method: "aes-256-cfb" }
+        - { shadow_port: 8443, shadow_pass: "Chai@China092018-8443", shadow_method: "chacha20-ietf-poly1305" }
+    - name: set firewalld default rule
+      command: firewall-cmd --permanent --zone=default --set-target=DROP
+    - name: restart firewalld
+      command: firewall-cmd --reload
+
