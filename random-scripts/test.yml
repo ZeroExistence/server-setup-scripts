@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  vars:
+    manyitems:
+      - { shadow_port: 443, shadow_pass: "password@443", shadow_method: "aes-256-cfb" }
+      - { shadow_port: 8443, shadow_pass: "password@8443", shadow_method: "chacha20-ietf-poly1305" }
+  tasks:
+    - name: setup wireguard
+      blockinfile:
+        name: /tmp/{{ item.shadow_port }}.txt
+        create: yes
+        block: |
+          {{ item }}
+      with_items: "{{ manyitems }}"
+      when: '"wg0" in ansible_interfaces'
