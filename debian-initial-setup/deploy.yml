@@ -7,7 +7,7 @@
       netmask: "8"
       port: "54321"
       peers:
-        - { pub_key: "pub_key", endpoint: "127.0.0.2:54321"}
+        - { pub_key: "pub_key", endpoint: "127.0.0.2:54321", allowedips: "127.0.0.1/28"}
   tasks:
     - name: update all packages
       apt:
@@ -70,4 +70,4 @@
         src: 192.168.100.1:/root/nfs
         fstype: nfs4
         state: mounted
-      when: ping_result|success
+      when: ping_result is success
