@@ -1,0 +1,68 @@
+---
+- hosts: localhost
+  vars:
+    django_site:
+      name: "[ REPOSITORY_NAME ]"
+      repo: "[ REPOSITORY_URL ]"
+  tasks:
+    - name: update all packages
+      apt:
+        upgrade: dist
+    - name: install all basic packages
+      apt:
+        name: python3-apt,fail2ban,firewalld,nginx,postgresql
+        state: latest
+    - name: install all pip3 dependecies
+      pip:
+        name: uwsgi,virtualenv,virtualenvwrapper
+    - name: download certbot-auto
+      get_url:
+        url: https://dl.eff.org/certbot-auto
+        dest: /root/certbot-auto
+        mode: 0700
+    - name: install certbot-auto
+      command: /root/certbot-auto --install-only -n
+    - name: install virtualenv
+      pip:
+        name: django, uwsgi, pillow, psycopg2, psycopg2-binary
+        virtualenv: /var/myapps/djangosite
+    - name: create uwsgi folder
+      file:
+        path: /etc/uwsgi/sites
+        state: directory
+    - name: remove enabled sites
+      file:
+        state: absent
+        path: /etc/nginx/sites-enabled/default
+    - name: copy template
+      template:
+        src: templates/sites-nginx.j2
+        dest: /etc/nginx/sites-available/{{ django_site.name }}.conf
+    - name: copy django uwsgi config
+      template:
+        src: templates/sites-wsgi.j2
+        dest: /etc/uwsgi/sites/{{ django_site.name }}.ini
+    - name: enable site
+      file:
+        src: /etc/nginx/sites-available/{{ django_site.name }}.conf
+        dest: /etc/nginx/sites-enabled/{{ django_site.name }}.conf
+        state: link
+    - name: copy uwsgi service file
+      template:
+        src: templates/uwsgi-service.j2
+        dest: /etc/systemd/system/uwsgi.service
+    - name: download repository
+      command: git clone {{ django_site.repo }}
+      args:
+        chdir: /var/myapps/djangosite/
+    - name: change ownership
+      file:
+        path: /var/myapps/djangosite
+        owner: www-data
+        group: www-data
+        recurse: yes
+        mode: 0700
+    - name: enable uwsgi service, but not starting it yet
+      service: name=uwsgi enabled=yes
+    - name: enable nginx service, but not starting it yet
+      service: name=nginx enabled=yes

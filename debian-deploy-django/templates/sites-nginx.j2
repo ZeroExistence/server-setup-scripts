@@ -1,0 +1,14 @@
+server {
+    listen 80;
+    server_name _ ;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location /static/ {
+        root /var/myapps/djangosite/{{ django_site.name }};
+    }
+
+    location / {
+        include         uwsgi_params;
+        uwsgi_pass      unix:/var/myapps/djangosite/{{ django_site.name }}/{{ django_site.name }}.sock;
+    }
+}
