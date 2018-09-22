@@ -1,0 +1,13 @@
+---
+  - name: create wg0 interface
+    command: ip link add dev wg0 type wireguard
+  - name: configure IP address of wg0
+    command: ip address add dev wg0 {{ wireguard_wg0.ipadd }}/{{ wireguard_wg0.port }}
+  - name: create configuration for the wg0
+    template:
+      src: wireguard.j2
+      dest: /etc/wireguard/wg0.conf
+  - name: set the configuration for wg0
+    command: wg setconf wg0 /etc/wireguard/wg0.conf
+  - name: bring up the wg0 interface
+    command: ip link set up dev wg0

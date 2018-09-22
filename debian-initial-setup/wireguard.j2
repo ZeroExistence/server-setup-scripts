@@ -1,0 +1,10 @@
+[Interface]
+ListenPort = {{ wireguard_wg0.port }}
+PrivateKey = {{ wireguard_wg0.priv_key }}
+
+{% for peer in wireguard_wg0.peers %}
+[Peer]
+PublicKey = {{ peer.pub_key }}
+AllowedIPs = 
+Endpoint = {{ peer.endpoint }}
+{% endfor %}

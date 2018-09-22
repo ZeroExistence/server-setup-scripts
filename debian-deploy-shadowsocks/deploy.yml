@@ -1,8 +1,9 @@
 ---
 - hosts: localhost
   vars: 
-    shadow_pass_443: 'Chai@China092018'
-    shadow_pass_8443: 'Chai@China092018-8443'
+    shadow_conf:
+      - { shadow_port: 443, shadow_pass: "password@443", shadow_method: "aes-256-cfb" }
+      - { shadow_port: 8443, shadow_pass: "password@8443", shadow_method: "chacha20-ietf-poly1305" }
   tasks:
     - name: update all packages
       apt:
@@ -27,9 +28,7 @@
           Pin: release a=unstable
           Pin-Priority: 150
     - include_tasks: setup-ss.yml
-      with_items:
-        - { shadow_port: 443, shadow_pass: "password@443", shadow_method: "aes-256-cfb" }
-        - { shadow_port: 8443, shadow_pass: "password@8443", shadow_method: "chacha20-ietf-poly1305" }
+      with_items: "{{ shadow_conf }}"
     - name: set firewalld default rule
       command: firewall-cmd --permanent --zone=public --set-target=DROP
     - name: restart firewalld

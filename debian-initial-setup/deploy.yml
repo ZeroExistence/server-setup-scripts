@@ -1,14 +1,20 @@
 ---
 - hosts: localhost
-  vars: 
-    shadow_pass: ''
+  vars:
+    wireguard_wg0:
+      priv_key: "privkey"
+      ipaddr: "127.0.0.1"
+      netmask: "8"
+      port: "54321"
+      peers:
+        - { pub_key: "pub_key", endpoint: "127.0.0.2:54321"}
   tasks:
     - name: update all packages
       apt:
         upgrade: dist
     - name: install all basic packages
       apt:
-        name: python3-apt,fail2ban,firewalld,git
+        name: python3-apt,fail2ban,firewalld
         state: latest
     - name: install all pip3 dependecies
       pip:
@@ -53,9 +59,15 @@
       command: firewall-cmd --permanent --zone=public --set-target=DROP
     - name: restart firewalld
       command: firewall-cmd --reload
+    - include_tasks: setup-wireguard.yml
+      when: '"wg0" not in ansible_interfaces'
+    - name: test connection to 192.168.100.1
+      command: ping 192.168.100.1 -c1
+      register: ping_result
     - name: mount nfs
       mount:
         path: /root/nfs
         src: 192.168.100.1:/root/nfs
         fstype: nfs4
         state: mounted
+      when: ping_result|success
